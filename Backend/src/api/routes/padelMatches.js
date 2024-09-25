@@ -1,17 +1,9 @@
-const mongoose = require('mongoose')
+const padelMatchesRoutes = require("express").Router();
+const { postPadelMatch, getPadelMatchByDate, getPadelMatches, deletePadelMatch } = require("../controllers/padelMatches");
 
-const padelMatchSchema = new mongoose.Schema({
-    title: { type: String, required: true, trim: true },
-    location: { type: String, required: true, trim: true },
-    date: { type: String, required: true, trim: true },
-    hour: { type: String, required: true, trim: true },
-    place: { type: String, required: true, enum: ['indoor', 'outdoor'] },
-    author: { type: String, required: true, trim: true },
-}, {
-    timestamps: true,
-    collection: 'padelMatches'
-})
+padelMatchesRoutes.post("/register", postPadelMatch);
+padelMatchesRoutes.get("/getBy/:date", getPadelMatchByDate);
+padelMatchesRoutes.get("/", getPadelMatches);
+padelMatchesRoutes.delete("/delete/:id", deletePadelMatch);
 
-const PadelMatch = mongoose.model('padelMatches', padelMatchSchema, 'padelMatches')
-
-module.exports = PadelMatch
+module.exports = padelMatchesRoutes;
