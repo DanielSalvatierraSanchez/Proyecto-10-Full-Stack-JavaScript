@@ -13,7 +13,7 @@ const isAuth = async (req, res, next) => {
         req.user = user;
         next();
     } catch (error) {
-        return res.status(400).json("❌ No estás autozizado. Primero debes de hacer el Login.");
+        return res.status(400).json("❌ Primero debes de hacer el Login.");
     }
 };
 
