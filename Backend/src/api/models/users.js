@@ -3,10 +3,10 @@ const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
     {
-        name: { type: String, required: true, trim: true, unique: true, minLength: 2, maxLength: 20 }, // probar usar minLength: 2, maxLength: 20
+        name: { type: String, required: true, trim: true, unique: true, minLength: 2, maxLength: 20 },
         email: { type: String, required: true, trim: true, unique: true, match: [/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,6}$/] },
-        password: { type: String, required: true, trim: true, minLength: 8 }, // probar usar minLength: 8
-        phone: { type: Number, required: true, trim: true, unique: true, /*minLength: 9, maxLength: 10 */},
+        password: { type: String, required: true, trim: true, minLength: 8 },
+        phone: { type: Number, required: true, trim: true, unique: true },
         role: { type: String, enum: ["admin", "user"], default: "user" },
         image: { type: String, default: "../../assets/avatar.png" },
         match: [{ type: mongoose.Types.ObjectId, ref: "padelMatches" }]

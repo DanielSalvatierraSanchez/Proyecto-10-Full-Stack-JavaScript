@@ -4,7 +4,7 @@ const { verifyToken, generateToken } = require("../utils/jwt");
 const isAuth = async (req, res, next) => {
     try {
         const token = await req.headers.authorization;
-        const modifyToken = await token.replace("Bearer", "");
+        const modifyToken = await token.replace("Bearer ", "");
 
         const { id } = verifyToken(modifyToken);
 
