@@ -1,5 +1,4 @@
 const bcrypt = require("bcrypt");
-const { registertUserControlError } = require("../../utils/registerUserControlError");
 const User = require("../models/users");
 const { generateToken } = require("../../utils/jwt");
 const { resultAllUsers } = require("../../utils/resultAllUsers");
@@ -10,12 +9,21 @@ const { resultUserDeleted } = require("../../utils/resultUserDeleted");
 const registerUser = async (req, res, next) => {
     try {
         const { name, email, password, phone } = req.body;
-        registertUserControlError(res, name, password, phone, email);
 
-        const userDuplicated = await User.findOne({ $or: [{ name }, { email }, { phone }] });
+        if (!name || !email || !password || !phone) {
+            return res.status(400).json({ message: "Todos los campos son obligatorios: Nombre, Email, Contraseña y Teléfono." });
+        } else if (name.length < 2 || name.length > 20) {
+            return res.status(400).json({ message: "El nombre debe de tener de 2 a 20 caracteres." });
+        } else if (password.length < 8 || password.length > 16) {
+            return res.status(400).json({ message: "La contraseña debe de tener entre 8 y 16 caracteres." });
+        } else if (phone.length !== 9) {
+            return res.status(400).json({ message: "El número de teléfono debe de tener 9 dígitos." });
+        }
+
+        const userDuplicated = User.findOne({ $or: [{ name }, { email }, { phone }] });
         if (userDuplicated) {
-            if (userDuplicated.name === name) {
-                return res.status(400).json({ message: "El nombre ya están en uso por otro usuario." });
+            if (userDuplicated.name == name) {
+                return res.status(400).json({ message: "El nombre ya está registrado por otro usuario." });
             } else if (userDuplicated.email == email) {
                 return res.status(400).json({ message: "El email ya está registrado por otro usuario." });
             } else if (userDuplicated.phone == phone) {
@@ -24,6 +32,9 @@ const registerUser = async (req, res, next) => {
         }
 
         const newUser = new User(req.body);
+        if (req.file) {
+            newUser.image = req.file.path
+        }
         const userSaved = await newUser.save();
         return res.status(201).json({ message: "Usuario creado correctamente.", userSaved });
     } catch (error) {
@@ -33,17 +44,16 @@ const registerUser = async (req, res, next) => {
 
 const loginUser = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
-        const userLogin = await User.findOne({ email });
-        if (userLogin) {
-            if (bcrypt.compareSync(password, userLogin.password)) {
-                const token = generateToken(userLogin._id);
-                return res.status(200).json({ message: "LOGIN realizado correctamente.", userLogin, token });
-            } else {
-                return res.status(400).json({ message: "El email o la contraseña son incorrectos." });
-            }
+        const { name, password } = req.body;
+        const userLogin = await User.findOne({ name });
+        if (!userLogin) {
+            return res.status(400).json({ message: "Usuario o contraseña incorrectos." });
+        }
+        if (bcrypt.compareSync(password, userLogin.password)) {
+            const token = generateToken(userLogin._id);
+            return res.status(200).json({ message: "LOGIN realizado correctamente.", userLogin, token });
         } else {
-            return res.status(400).json({ message: "El email no existe." });
+            return res.status(400).json({ message: "Usuario o contraseña incorrectos." });
         }
     } catch (error) {
         return res.status(400).json(`❌ Fallo en loginUser: ${error.message}`);
@@ -68,8 +78,8 @@ const getAllUsers = async (req, res, next) => {
 
 const getUserByName = async (req, res, next) => {
     try {
-        const { name } = req.params;
         const user = req.user;
+        const { name } = req.params;
 
         if (user.role === "admin") {
             const searchUserByName = await User.find({ name: new RegExp(name, "i") }).populate("match");
@@ -87,8 +97,8 @@ const getUserByName = async (req, res, next) => {
 
 const getUserByPhone = async (req, res, next) => {
     try {
-        const { phone } = req.params;
         const user = req.user;
+        const { phone } = req.params;
 
         if (phone.length !== 9) {
             return res.status(400).json("Introduce un número de teléfono de 9 digitos.");
@@ -107,7 +117,52 @@ const getUserByPhone = async (req, res, next) => {
 
 const updateUser = async (req, res, next) => {
     try {
-        const {} = req.body;
+        const user = req.user;
+        const { id } = req.params;
+        const { name, email, password, phone, role, match } = req.body;
+
+        if (user._id.toString() !== id && user.role !== "admin") {
+            return res.status(400).json({ message: "No puedes actualizar a otro usuario, únicamente puede un Administrador." });
+        }
+
+        const userDuplicated = await User.findOne({ $or: [{ name }, { email }, { phone }] });
+        if (userDuplicated) {
+            if (userDuplicated.name == name) {
+                return res.status(400).json({ message: "El nombre ya está registrado por otro usuario." });
+            } else if (userDuplicated.email == email) {
+                return res.status(400).json({ message: "El email ya está registrado por otro usuario." });
+            } else if (userDuplicated.phone == phone) {
+                return res.status(400).json({ message: "El número de teléfono ya está registrado por otro usuario." });
+            }
+        }
+
+        const newUser = new User(req.body);
+        newUser._id = id;
+
+        if (req.file) {
+            const oldUser = await User.findById(id);
+            deleteFile(oldUser.image)
+            newUser.image = req.file.path
+        }
+
+        if (password) {
+            if (password.length < 8 || password.length > 16) {
+                return res.status(400).json({ message: "La contraseña debe de tener entre 8 y 16 caracteres." });
+            }
+            const newPassword = bcrypt.hashSync(password, 10);
+            newUser.password = newPassword;
+        }
+        // if (role) {
+        //     if (user.role === "admin") {
+        //         newUser.role = role
+        //     }
+        // }    
+        // if (match) {
+        //     user.match.$addToSet = { match: padelMatches }
+        // }
+
+        const userUpdated = await User.findByIdAndUpdate(id, newUser, { new: true });
+        return res.status(200).json({ message: "Datos del usuario actualizados correctamente.", userUpdated });
     } catch (error) {
         return res.status(400).json(`❌ Fallo en updateUser: ${error.message}`);
     }
@@ -116,13 +171,13 @@ const updateUser = async (req, res, next) => {
 const deleteUser = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const user = req.user
+        const user = req.user;
 
-        if (user._id.toString() !== id && user.role !== 'admin') {
-            return res.status(400).json({ message: 'No tienes permisos de Administrador para eliminar el usuario.' })
+        if (user._id.toString() !== id && user.role !== "admin") {
+            return res.status(400).json({ message: "No puedes eliminar a otro usuario, únicamente puede hacerlo un Administrador." });
         }
         const userDeleted = await User.findByIdAndDelete(id);
-        resultUserDeleted(res, userDeleted)
+        resultUserDeleted(res, userDeleted);
     } catch (error) {
         return res.status(400).json(`❌ Fallo en deleteUser: ${error.message}`);
     }
