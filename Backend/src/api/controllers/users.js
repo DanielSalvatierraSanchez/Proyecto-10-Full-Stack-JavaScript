@@ -5,30 +5,22 @@ const { resultAllUsers } = require("../../utils/resultAllUsers");
 const { resultUsersByName } = require("../../utils/resultUsersByName");
 const { resultUsersByPhone } = require("../../utils/resultUsersByPhone");
 const { resultUserDeleted } = require("../../utils/resultUserDeleted");
+const { registerUserControlDuplicated } = require("../../utils/registerUserControlDuplicated");
+const { registertUserParamsError } = require("../../utils/registerUserParamsError");
 
 const registerUser = async (req, res, next) => {
     try {
         const { name, email, password, phone } = req.body;
 
-        if (!name || !email || !password || !phone) {
-            return res.status(400).json({ message: "Todos los campos son obligatorios: Nombre, Email, Contraseña y Teléfono." });
-        } else if (name.length < 2 || name.length > 20) {
-            return res.status(400).json({ message: "El nombre debe de tener de 2 a 20 caracteres." });
-        } else if (password.length < 8 || password.length > 16) {
-            return res.status(400).json({ message: "La contraseña debe de tener entre 8 y 16 caracteres." });
-        } else if (phone.length !== 9) {
-            return res.status(400).json({ message: "El número de teléfono debe de tener 9 dígitos." });
+        const userParamsError = registertUserParamsError(name, password, phone, email);
+        if (userParamsError) {
+            return res.status(400).json({ message: userParamsError });
         }
 
-        const userDuplicated = User.findOne({ $or: [{ name }, { email }, { phone }] });
+        const userDuplicated = await User.findOne({ $or: [{ name }, { email }, { phone }] });
+        const errorDuplicated = registerUserControlDuplicated(userDuplicated, name, email, phone);
         if (userDuplicated) {
-            if (userDuplicated.name == name) {
-                return res.status(400).json({ message: "El nombre ya está registrado por otro usuario." });
-            } else if (userDuplicated.email == email) {
-                return res.status(400).json({ message: "El email ya está registrado por otro usuario." });
-            } else if (userDuplicated.phone == phone) {
-                return res.status(400).json({ message: "El número de teléfono ya está registrado por otro usuario." });
-            }
+            return res.status(400).json({ message: errorDuplicated });
         }
 
         const newUser = new User(req.body);
@@ -141,8 +133,8 @@ const updateUser = async (req, res, next) => {
 
         if (req.file) {
             const oldUser = await User.findById(id);
-            deleteFile(oldUser.image)
-            newUser.image = req.file.path
+            deleteFile(oldUser.image);
+            newUser.image = req.file.path;
         }
 
         if (password) {
@@ -156,7 +148,7 @@ const updateUser = async (req, res, next) => {
         //     if (user.role === "admin") {
         //         newUser.role = role
         //     }
-        // }    
+        // }
         // if (match) {
         //     user.match.$addToSet = { match: padelMatches }
         // }
