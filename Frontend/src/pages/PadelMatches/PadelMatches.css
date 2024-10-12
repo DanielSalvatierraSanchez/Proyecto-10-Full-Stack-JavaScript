@@ -1,0 +1,11 @@
+#PadelMatches {
+    min-height: 92svh;
+    background-color: #a263ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#PadelMatches > h1 {
+    font-size: 50px;
+}

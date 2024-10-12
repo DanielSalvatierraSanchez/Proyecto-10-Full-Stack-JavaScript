@@ -1,0 +1,11 @@
+#Login {
+    min-height: 92svh;
+    background-color: #ff94d1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#Login > h1 {
+    font-size: 50px;
+}

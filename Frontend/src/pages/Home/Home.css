@@ -1,0 +1,11 @@
+#Home {
+    min-height: 92svh;
+    background-color: #ffff94;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#Home > h1 {
+    font-size: 50px;
+}

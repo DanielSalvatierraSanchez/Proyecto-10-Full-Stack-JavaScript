@@ -1,0 +1,28 @@
+#CreatePadelMatch {
+    min-height: 92svh;
+    background-color: #56ff7d;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#CreatePadelMatch > h1 {
+    font-size: 50px;
+}
+
+
+/* .divCreate {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 500px;
+    min-height: 700px;
+    background-color: rgb(102, 255, 102);
+}
+
+.divCreateData {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(150, 150, 255);
+} */
