@@ -1,12 +1,12 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/users");
 const { generateToken } = require("../../utils/jwt");
-const { resultAllUsers } = require("../../utils/resultAllUsers");
 const { resultUsersByName } = require("../../utils/resultUsersByName");
 const { resultUsersByPhone } = require("../../utils/resultUsersByPhone");
 const { resultUserDeleted } = require("../../utils/resultUserDeleted");
 const { registerUserControlDuplicated } = require("../../utils/registerUserControlDuplicated");
 const { registertUserParamsError } = require("../../utils/registerUserParamsError");
+const { selectUserData } = require("../../utils/selectUserData");
 
 const registerUser = async (req, res, next) => {
     try {
@@ -24,8 +24,11 @@ const registerUser = async (req, res, next) => {
         }
 
         const newUser = new User(req.body);
+        if (newUser.role === "admin") {
+            return res.status(400).json({ message: "No tienes permisos para tener el rol de Administrador." });
+        }
         if (req.file) {
-            newUser.image = req.file.path
+            newUser.image = req.file.path;
         }
         const userSaved = await newUser.save();
         return res.status(201).json({ message: "Usuario creado correctamente.", userSaved });
@@ -36,8 +39,8 @@ const registerUser = async (req, res, next) => {
 
 const loginUser = async (req, res, next) => {
     try {
-        const { name, password } = req.body;
-        const userLogin = await User.findOne({ name });
+        const { userData, password } = req.body;
+        const userLogin = await User.findOne({ $or: [{ name: userData }, { email: userData }] });
         if (!userLogin) {
             return res.status(400).json({ message: "Usuario o contraseña incorrectos." });
         }
@@ -55,14 +58,8 @@ const loginUser = async (req, res, next) => {
 const getAllUsers = async (req, res, next) => {
     try {
         const user = req.user;
-
-        if (user.role === "admin") {
-            const allUsers = await User.find().populate("match");
-            resultAllUsers(res, allUsers);
-        } else {
-            const allUsers = await User.find().select("-password -role -email").populate("match");
-            resultAllUsers(res, allUsers);
-        }
+        const allUsers = await User.find().select(selectUserData(user)).populate("match");
+        res.status(200).json({ message: "Listado completo de usuarios:", allUsers });
     } catch (error) {
         return res.status(400).json(`❌ Fallo en getAllUsers: ${error.message}`);
     }
@@ -72,16 +69,10 @@ const getUserByName = async (req, res, next) => {
     try {
         const user = req.user;
         const { name } = req.params;
-
-        if (user.role === "admin") {
-            const searchUserByName = await User.find({ name: new RegExp(name, "i") }).populate("match");
-            resultUsersByName(res, searchUserByName, name);
-        } else {
-            const searchUserByName = await User.find({ name: new RegExp(name, "i") })
-                .select("-password -role -email")
-                .populate("match");
-            resultUsersByName(res, searchUserByName, name);
-        }
+        const searchUserByName = await User.find({ name: new RegExp(name, "i") })
+            .select(selectUserData(user))
+            .populate("match");
+        resultUsersByName(res, searchUserByName, name);
     } catch (error) {
         return res.status(400).json(`❌ Fallo en getUserByName: ${error.message}`);
     }
@@ -91,17 +82,11 @@ const getUserByPhone = async (req, res, next) => {
     try {
         const user = req.user;
         const { phone } = req.params;
-
         if (phone.length !== 9) {
             return res.status(400).json("Introduce un número de teléfono de 9 digitos.");
         }
-        if (user.role === "admin") {
-            const searchUserByPhone = await User.find({ phone }).populate("match");
-            resultUsersByPhone(res, searchUserByPhone, phone);
-        } else {
-            const searchUserByPhone = await User.find({ phone }).select("-password -role -email").populate("match");
-            resultUsersByPhone(res, searchUserByPhone, phone);
-        }
+        const searchUserByPhone = await User.find({ phone }).select(selectUserData(user)).populate("match");
+        resultUsersByPhone(res, searchUserByPhone, phone);
     } catch (error) {
         return res.status(400).json(`❌ Fallo en getUserByPhone: ${error.message}`);
     }

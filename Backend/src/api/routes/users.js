@@ -7,7 +7,7 @@ usersRoutes.post("/login", loginUser);
 usersRoutes.get("/getByName/:name", isAuth, getUserByName);
 usersRoutes.get("/getByPhone/:phone", isAuth, getUserByPhone);
 usersRoutes.get("/", isAuth, getAllUsers);
-usersRoutes.put("/update/:id", isAuth, updateUser); // isAuth,
-usersRoutes.delete("/delete/:id", isAuth, deleteUser); // isAuth,
+usersRoutes.put("/update/:id", isAuth, updateUser);
+usersRoutes.delete("/delete/:id", isAuth, deleteUser);
 
 module.exports = usersRoutes;
