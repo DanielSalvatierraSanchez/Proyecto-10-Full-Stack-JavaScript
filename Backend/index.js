@@ -4,9 +4,11 @@ const cors = require("cors");
 const { connectDB } = require("./src/config/db");
 const padelMatchesRoutes = require("./src/api/routes/padelMatches");
 const usersRoutes = require("./src/api/routes/users");
+const { connnectCloudinary } = require("./src/config/cloudinary");
 
 const app = express();
 connectDB();
+connnectCloudinary();
 
 app.use(cors());
 app.use(express.json());
