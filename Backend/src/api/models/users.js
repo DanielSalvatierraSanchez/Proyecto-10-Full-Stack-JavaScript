@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema(
         phone: { type: Number, required: true, trim: true },
         role: { type: String, enum: ["admin", "user"], default: "user" },
         image: { type: String, default: "../../assets/avatar.png" },
-        match: [{ type: mongoose.Types.ObjectId, ref: "padelMatches" }]
+        padelMatches: [{ type: mongoose.Types.ObjectId, ref: "padelMatches" }]
     },
     {
         timestamps: true,

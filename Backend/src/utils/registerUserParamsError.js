@@ -6,7 +6,7 @@ const registertUserParamsError = (name, password, phone, email) => {
         return "El nombre debe de tener de 2 a 20 caracteres.";
     }
     if (password.length < 8 || password.length > 16) {
-        return "La password debe de entre 8 y 16 caracteres.";
+        return "La constraseña debe de entre 8 y 16 caracteres.";
     }
     if (phone.length !== 9) {
         return "El número de teléfono debe de tener 9 dígitos.";

@@ -17,4 +17,4 @@ const uploadFolders = (folderName) => {
     return multer({ storage });
 };
 
-moudule.exports = uploadFolders;
+module.exports = uploadFolders;

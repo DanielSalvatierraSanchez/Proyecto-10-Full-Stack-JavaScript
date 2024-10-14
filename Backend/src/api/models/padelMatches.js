@@ -8,7 +8,7 @@ const padelMatchSchema = new mongoose.Schema(
         hour: { type: String, required: true, trim: true }, // probar con Number
         place: { type: String, required: true, enum: ["indoor", "outdoor"] },
         image: { type: String, default: "../../assets/pista.jpg" },
-        author: [{ type: mongoose.Types.ObjectId, ref: "users", required: false }]
+        author: [{ type: mongoose.Types.ObjectId, ref: "users" }]
     },
     {
         timestamps: true,

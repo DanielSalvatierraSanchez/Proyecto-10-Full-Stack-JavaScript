@@ -7,6 +7,8 @@ const { resultUserDeleted } = require("../../utils/resultUserDeleted");
 const { registerUserControlDuplicated } = require("../../utils/registerUserControlDuplicated");
 const { registertUserParamsError } = require("../../utils/registerUserParamsError");
 const { selectUserData } = require("../../utils/selectUserData");
+const { idAndRoleChecked } = require("../../utils/checkId&Role");
+const { deleteImage } = require("../../utils/deleteImage");
 
 const registerUser = async (req, res, next) => {
     try {
@@ -30,6 +32,7 @@ const registerUser = async (req, res, next) => {
         if (req.file) {
             newUser.image = req.file.path;
         }
+
         const userSaved = await newUser.save();
         return res.status(201).json({ message: "Usuario creado correctamente.", userSaved });
     } catch (error) {
@@ -96,29 +99,25 @@ const updateUser = async (req, res, next) => {
     try {
         const user = req.user;
         const { id } = req.params;
-        const { name, email, password, phone, role, match } = req.body;
+        const { name, email, password, phone, role, padelMatches } = req.body;
 
-        if (user._id.toString() !== id && user.role !== "admin") {
-            return res.status(400).json({ message: "No puedes actualizar a otro usuario, únicamente puede un Administrador." });
+        const userChecked = idAndRoleChecked(id, user);
+        if (userChecked) {
+            return res.status(400).json({ message: userChecked });
         }
 
         const userDuplicated = await User.findOne({ $or: [{ name }, { email }, { phone }] });
+        const errorDuplicated = registerUserControlDuplicated(userDuplicated, name, email, phone);
         if (userDuplicated) {
-            if (userDuplicated.name == name) {
-                return res.status(400).json({ message: "El nombre ya está registrado por otro usuario." });
-            } else if (userDuplicated.email == email) {
-                return res.status(400).json({ message: "El email ya está registrado por otro usuario." });
-            } else if (userDuplicated.phone == phone) {
-                return res.status(400).json({ message: "El número de teléfono ya está registrado por otro usuario." });
-            }
+            return res.status(400).json({ message: errorDuplicated });
         }
 
+        const oldUser = await User.findById(id);
         const newUser = new User(req.body);
         newUser._id = id;
 
         if (req.file) {
-            const oldUser = await User.findById(id);
-            deleteFile(oldUser.image);
+            deleteImage(oldUser.image);
             newUser.image = req.file.path;
         }
 
@@ -129,14 +128,14 @@ const updateUser = async (req, res, next) => {
             const newPassword = bcrypt.hashSync(password, 10);
             newUser.password = newPassword;
         }
-        // if (role) {
-        //     if (user.role === "admin") {
-        //         newUser.role = role
-        //     }
-        // }
-        // if (match) {
-        //     user.match.$addToSet = { match: padelMatches }
-        // }
+
+        if (user.role !== "admin") {
+            newUser.role = oldUser.role;
+        }
+
+        if (padelMatches) {
+            newUser.padelMatches = [...newUser.padelMatches, ...oldUser.padelMatches];
+        }
 
         const userUpdated = await User.findByIdAndUpdate(id, newUser, { new: true });
         return res.status(200).json({ message: "Datos del usuario actualizados correctamente.", userUpdated });
@@ -150,10 +149,13 @@ const deleteUser = async (req, res, next) => {
         const { id } = req.params;
         const user = req.user;
 
-        if (user._id.toString() !== id && user.role !== "admin") {
-            return res.status(400).json({ message: "No puedes eliminar a otro usuario, únicamente puede hacerlo un Administrador." });
+        const userChecked = idAndRoleChecked(id, user);
+        if (userChecked) {
+            return res.status(400).json({ message: userChecked });
         }
+
         const userDeleted = await User.findByIdAndDelete(id);
+        deleteImage(userDeleted.image);
         resultUserDeleted(res, userDeleted);
     } catch (error) {
         return res.status(400).json(`❌ Fallo en deleteUser: ${error.message}`);
