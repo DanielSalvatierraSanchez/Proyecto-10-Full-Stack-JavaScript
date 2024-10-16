@@ -1,6 +1,6 @@
 const { isAuth } = require("../../middlewares/isAuth");
 const uploadFolders = require("../../middlewares/uploadFolders");
-const { registerUser, getAllUsers, getUserByName, getUserByPhone, updateUser, deleteUser, loginUser } = require("../controllers/users");
+const { registerUser, loginUser, getAllUsers, getUserByName, getUserByPhone, updateUser, deleteUser } = require("../controllers/users");
 const usersRoutes = require("express").Router();
 
 usersRoutes.post("/register", uploadFolders("Users_Of_Appadel").single("image"), registerUser);

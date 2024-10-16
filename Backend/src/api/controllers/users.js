@@ -9,6 +9,7 @@ const { registertUserParamsError } = require("../../utils/registerUserParamsErro
 const { selectUserData } = require("../../utils/selectUserData");
 const { idAndRoleChecked } = require("../../utils/checkId&Role");
 const { deleteImage } = require("../../utils/deleteImage");
+const PadelMatch = require("../models/padelMatches");
 
 const registerUser = async (req, res, next) => {
     try {
@@ -61,7 +62,7 @@ const loginUser = async (req, res, next) => {
 const getAllUsers = async (req, res, next) => {
     try {
         const user = req.user;
-        const allUsers = await User.find().select(selectUserData(user)).populate("match");
+        const allUsers = await User.find().select(selectUserData(user)).populate("padelMatches");
         res.status(200).json({ message: "Listado completo de usuarios:", allUsers });
     } catch (error) {
         return res.status(400).json(`❌ Fallo en getAllUsers: ${error.message}`);
@@ -74,7 +75,7 @@ const getUserByName = async (req, res, next) => {
         const { name } = req.params;
         const searchUserByName = await User.find({ name: new RegExp(name, "i") })
             .select(selectUserData(user))
-            .populate("match");
+            .populate("padelMatches");
         resultUsersByName(res, searchUserByName, name);
     } catch (error) {
         return res.status(400).json(`❌ Fallo en getUserByName: ${error.message}`);
@@ -88,7 +89,7 @@ const getUserByPhone = async (req, res, next) => {
         if (phone.length !== 9) {
             return res.status(400).json("Introduce un número de teléfono de 9 digitos.");
         }
-        const searchUserByPhone = await User.find({ phone }).select(selectUserData(user)).populate("match");
+        const searchUserByPhone = await User.find({ phone }).select(selectUserData(user)).populate("padelMatches");
         resultUsersByPhone(res, searchUserByPhone, phone);
     } catch (error) {
         return res.status(400).json(`❌ Fallo en getUserByPhone: ${error.message}`);
@@ -107,6 +108,7 @@ const updateUser = async (req, res, next) => {
         }
 
         const userDuplicated = await User.findOne({ $or: [{ name }, { email }, { phone }] });
+
         const errorDuplicated = registerUserControlDuplicated(userDuplicated, name, email, phone);
         if (userDuplicated) {
             return res.status(400).json({ message: errorDuplicated });
@@ -116,26 +118,29 @@ const updateUser = async (req, res, next) => {
         const newUser = new User(req.body);
         newUser._id = id;
 
-        if (req.file) {
-            deleteImage(oldUser.image);
-            newUser.image = req.file.path;
-        }
-
         if (password) {
             if (password.length < 8 || password.length > 16) {
                 return res.status(400).json({ message: "La contraseña debe de tener entre 8 y 16 caracteres." });
             }
             const newPassword = bcrypt.hashSync(password, 10);
             newUser.password = newPassword;
+            // return res.status(200).json({ message: "Contraseña modificada correctamente." });
         }
 
         if (user.role !== "admin") {
             newUser.role = oldUser.role;
+            // return res.status(400).json({ message: "Sólo un Administrador puede cambiarte el rol." });
         }
 
-        if (padelMatches) {
-            newUser.padelMatches = [...newUser.padelMatches, ...oldUser.padelMatches];
+        if (req.file) {
+            deleteImage(oldUser.image);
+            newUser.image = req.file.path;
+            // return res.status(200).json({ message: "Imagen modificada correctamente." });
         }
+
+        // if (padelMatches) {
+        //     newUser.padelMatches = [...newUser.padelMatches, ...oldUser.padelMatches];
+        // }
 
         const userUpdated = await User.findByIdAndUpdate(id, newUser, { new: true });
         return res.status(200).json({ message: "Datos del usuario actualizados correctamente.", userUpdated });
