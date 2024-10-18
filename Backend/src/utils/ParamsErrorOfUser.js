@@ -1,4 +1,4 @@
-const registertUserParamsError = (name, password, phone, email) => {
+const ParamsErrorOfUser = (name, password, phone, email) => {
     if (!name || !email || !password || !phone) {
         return "Todos los campos son obligatorios: Nombre, Email, Contraseña y Teléfono.";
     }
@@ -13,4 +13,4 @@ const registertUserParamsError = (name, password, phone, email) => {
     }
     return null;
 };
-module.exports = { registertUserParamsError };
+module.exports = { ParamsErrorOfUser };

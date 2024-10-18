@@ -1,15 +1,23 @@
+const { ParamsErrorOfPadelMatch } = require("../../utils/ParamsErrorOfPadelMatch");
 const PadelMatch = require("../models/padelMatches");
 
-const postPadelMatch = async (req, res, next) => {
+const createPadelMatch = async (req, res, next) => {
     try {
-        const { location, date, hour, place, author } = req.body;
-        // const padelMatchDuplicated = await PadelMatch.findOne({ date, hour })
-        // padelMatchDuplicated ? res.status(400).json({ message: `Ya existe un partido el dia ${date} a las ${hour} creado por ${author}.` }) : padelMatchDuplicated
+        const { day, month, hour, place, author } = req.body;
+
+        const padelMatchParamsError = ParamsErrorOfPadelMatch(day, month, hour, place);
+        if (padelMatchParamsError) {
+            return res.status(400).json({ message: padelMatchParamsError });
+        }
+
+        // const padelMatchDuplicated = await PadelMatch.findOne({ day, month, hour })
+        // padelMatchDuplicated ? res.status(400).json({ message: `Ya existe un partido el dia ${day} a las ${hour} creado por ${author}.` }) : padelMatchDuplicated
+
         const newPadelMatch = new PadelMatch(req.body);
         const padelMatchSaved = await newPadelMatch.save();
         return res.status(201).json({ message: "Partido creado.", padelMatchSaved });
     } catch (error) {
-        return res.status(400).json(`❌ Fallo en postPadelMatch: ${error.message}`);
+        return res.status(400).json(`❌ Fallo en createPadelMatch: ${error.message}`);
     }
 };
 
@@ -17,9 +25,7 @@ const getPadelMatches = async (req, res, next) => {
     try {
         const allPadelMatches = await PadelMatch.find();
         return allPadelMatches.length
-            ? res.status(200).json({
-                  message: `Estos son todos los partidos que hay: ${allPadelMatches}`
-              })
+            ? res.status(200).json({ message: `Estos son todos los partidos que hay: ${allPadelMatches}` })
             : res.status(400).json({ message: "No hay ningún partido programado." });
     } catch (error) {
         return res.status(400).json(`❌ Fallo en getPadelMatches: ${error.message}`);
@@ -33,10 +39,7 @@ const getPadelMatchByDate = async (req, res, next) => {
             date: new RegExp(date, "i")
         });
         findPadelMatch.length
-            ? res.status(200).json({
-                  message: `Se han encontrado los siguientes partidos: `,
-                  findPadelMatch
-              })
+            ? res.status(200).json({ message: `Se han encontrado los siguientes partidos: `, findPadelMatch })
             : res.status(400).json({ message: `No se ha encontrado ningún partido.` });
     } catch (error) {
         return res.status(400).json(`❌ Fallo en getPadelMatchByDate: ${error.message}`);
@@ -67,7 +70,7 @@ const deletePadelMatch = async (req, res, next) => {
 };
 
 module.exports = {
-    postPadelMatch,
+    createPadelMatch,
     getPadelMatches,
     getPadelMatchByDate,
     deletePadelMatch

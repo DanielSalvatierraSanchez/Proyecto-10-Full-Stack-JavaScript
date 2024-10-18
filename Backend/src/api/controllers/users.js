@@ -5,17 +5,17 @@ const { resultUsersByName } = require("../../utils/resultUsersByName");
 const { resultUsersByPhone } = require("../../utils/resultUsersByPhone");
 const { resultUserDeleted } = require("../../utils/resultUserDeleted");
 const { registerUserControlDuplicated } = require("../../utils/registerUserControlDuplicated");
-const { registertUserParamsError } = require("../../utils/registerUserParamsError");
 const { selectUserData } = require("../../utils/selectUserData");
 const { idAndRoleChecked } = require("../../utils/checkId&Role");
 const { deleteImage } = require("../../utils/deleteImage");
 const PadelMatch = require("../models/padelMatches");
+const { ParamsErrorOfUser } = require("../../utils/ParamsErrorOfUser");
 
 const registerUser = async (req, res, next) => {
     try {
         const { name, email, password, phone } = req.body;
 
-        const userParamsError = registertUserParamsError(name, password, phone, email);
+        const userParamsError = ParamsErrorOfUser(name, password, phone, email);
         if (userParamsError) {
             return res.status(400).json({ message: userParamsError });
         }
