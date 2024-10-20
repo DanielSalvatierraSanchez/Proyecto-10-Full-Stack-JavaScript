@@ -64,11 +64,32 @@ const getPadelMatchByDay = async (req, res, next) => {
 const updatePadelMatch = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const {  } = req.body;
+        // const user = req.user;
 
+        const oldPadelMatch = await PadelMatch.findById(id);
+        if (!oldPadelMatch) {
+            return res.status(400).json({ message: "Partido no encontrado." });
+        }
         const padelMatchModify = new PadelMatch(req.body);
         padelMatchModify._id = id;
+
+        // const userChecked = idAndRoleChecked(id, user);
+        // if (userChecked) {
+        //     return res.status(400).json({ message: userChecked });
+        // }
+
+        // ParamsErrorOfPadelMatch(day, month, hour, place)
+
+        if (req.file) {
+            // const oldPadelMatch = await PadelMatch.findById(id);
+            deleteImage(oldPadelMatch.image);
+            padelMatchModify.image = req.file.path;
+        }
+
         const padelMatchUpdate = await PadelMatch.findByIdAndUpdate(id, padelMatchModify, { new: true });
-        padelMatchUpdate ? res.status(200).json("No existe ese partido.") : res.status(400).json("Partido actualizado correctamente.", padelMatchUpdate);
+        return res.status(200).json({ message: "Partido actualizado correctamente.", padelMatchUpdate });
+        // padelMatchUpdate ? res.status(200).json("No existe ese partido.") : res.status(400).json("Partido actualizado correctamente.", padelMatchUpdate);
     } catch (error) {
         return res.status(400).json(`❌ Fallo en updatePadelMatch: ${error.message}`);
     }

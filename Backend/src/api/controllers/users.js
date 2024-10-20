@@ -63,7 +63,7 @@ const getAllUsers = async (req, res, next) => {
     try {
         const user = req.user;
         const allUsers = await User.find().select(selectUserData(user)).populate("padelMatches");
-        res.status(200).json({ message: "Listado completo de usuarios:", allUsers });
+        return res.status(200).json({ message: "Listado completo de usuarios:", allUsers });
     } catch (error) {
         return res.status(400).json(`❌ Fallo en getAllUsers: ${error.message}`);
     }
@@ -98,9 +98,9 @@ const getUserByPhone = async (req, res, next) => {
 
 const updateUser = async (req, res, next) => {
     try {
-        const user = req.user;
         const { id } = req.params;
         const { name, email, password, phone, role, padelMatches } = req.body;
+        const user = req.user;
 
         const userChecked = idAndRoleChecked(id, user);
         if (userChecked) {
@@ -115,34 +115,34 @@ const updateUser = async (req, res, next) => {
         }
 
         const oldUser = await User.findById(id);
-        const newUser = new User(req.body);
-        newUser._id = id;
+        const userModify = new User(req.body);
+        userModify._id = id;
 
         if (password) {
             if (password.length < 8 || password.length > 16) {
                 return res.status(400).json({ message: "La contraseña debe de tener entre 8 y 16 caracteres." });
             }
             const newPassword = bcrypt.hashSync(password, 10);
-            newUser.password = newPassword;
+            userModify.password = newPassword;
             // return res.status(200).json({ message: "Contraseña modificada correctamente." });
         }
 
         if (user.role !== "admin") {
-            newUser.role = oldUser.role;
+            userModify.role = oldUser.role;
             // return res.status(400).json({ message: "Sólo un Administrador puede cambiarte el rol." });
         }
 
         if (req.file) {
             deleteImage(oldUser.image);
-            newUser.image = req.file.path;
+            userModify.image = req.file.path;
             // return res.status(200).json({ message: "Imagen modificada correctamente." });
         }
 
         // if (padelMatches) {
-        //     newUser.padelMatches = [...newUser.padelMatches, ...oldUser.padelMatches];
+        //     userModify.padelMatches = [...userModify.padelMatches, ...oldUser.padelMatches];
         // }
 
-        const userUpdated = await User.findByIdAndUpdate(id, newUser, { new: true });
+        const userUpdated = await User.findByIdAndUpdate(id, userModify, { new: true });
         return res.status(200).json({ message: "Datos del usuario actualizados correctamente.", userUpdated });
     } catch (error) {
         return res.status(400).json(`❌ Fallo en updateUser: ${error.message}`);
