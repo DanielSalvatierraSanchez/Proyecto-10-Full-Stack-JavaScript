@@ -8,7 +8,6 @@ const { registerUserControlDuplicated } = require("../../utils/registerUserContr
 const { selectUserData } = require("../../utils/selectUserData");
 const { idAndRoleChecked } = require("../../utils/checkId&Role");
 const { deleteImage } = require("../../utils/deleteImage");
-const PadelMatch = require("../models/padelMatches");
 const { ParamsErrorOfUser } = require("../../utils/ParamsErrorOfUser");
 
 const registerUser = async (req, res, next) => {
