@@ -29,11 +29,9 @@ const registerUser = async (req, res, next) => {
         if (newUser.role === "admin") {
             return res.status(400).json({ message: "No tienes permisos para tener el rol de Administrador." });
         }
-        if (req.file) {
-            newUser.image = req.file.path;
-        }
 
         const userSaved = await newUser.save();
+        req.file ? (newUser.image = req.file.path) : res.status(400).json({ message: "No ha sido introducida ninguna imagen." });
         return res.status(201).json({ message: "Usuario creado correctamente.", userSaved });
     } catch (error) {
         return res.status(400).json(`❌ Fallo en registerUser: ${error.message}`);
@@ -98,7 +96,7 @@ const getUserByPhone = async (req, res, next) => {
 const updateUser = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { name, email, password, phone, role, padelMatches } = req.body;
+        const { name, email, password, phone } = req.body;
         const user = req.user;
 
         const userChecked = idAndRoleChecked(id, user);
@@ -123,23 +121,12 @@ const updateUser = async (req, res, next) => {
             }
             const newPassword = bcrypt.hashSync(password, 10);
             userModify.password = newPassword;
-            // return res.status(200).json({ message: "Contraseña modificada correctamente." });
-        }
-
-        if (user.role !== "admin") {
-            userModify.role = oldUser.role;
-            // return res.status(400).json({ message: "Sólo un Administrador puede cambiarte el rol." });
         }
 
         if (req.file) {
             deleteImage(oldUser.image);
             userModify.image = req.file.path;
-            // return res.status(200).json({ message: "Imagen modificada correctamente." });
         }
-
-        // if (padelMatches) {
-        //     userModify.padelMatches = [...userModify.padelMatches, ...oldUser.padelMatches];
-        // }
 
         const userUpdated = await User.findByIdAndUpdate(id, userModify, { new: true });
         return res.status(200).json({ message: "Datos del usuario actualizados correctamente.", userUpdated });

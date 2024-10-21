@@ -1,10 +1,7 @@
-const idAndRoleChecked = (user) => {
-    if (user._id.toString() !== user.id.toString() && user.role !== "admin") {
+const idAndRoleChecked = (id, user) => {
+    if (user._id.toString() !== id && user.role !== "admin") {
         return "¡Cuidado! No puedes hacer eso, únicamente puede hacerlo un Administrador.";
     }
-    // if (userId !== userId && user.role !== "admin") {
-    //     return "¡Cuidado! No puedes hacer eso, únicamente puede hacerlo un Administrador.";
-    // }
     return null;
 };
 
